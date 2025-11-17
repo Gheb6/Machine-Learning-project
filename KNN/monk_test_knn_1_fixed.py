@@ -341,9 +341,12 @@ def evaluate_radius_knn(X_train, y_train, X_val, y_val, radius_values):
         Radii that produced valid predictions
     accuracies : list
         Corresponding validation accuracies
+    avg_neighbors : list
+        Average number of neighbors found per sample
     """
     accuracies = []
     valid_radii = []
+    avg_neighbors = []
     
     print(f"\n--- Testing Radius Neighbors ---")
     
@@ -357,17 +360,22 @@ def evaluate_radius_knn(X_train, y_train, X_val, y_val, radius_values):
             )
             rknn.fit(X_train, y_train)
             
+            # Get neighbors to check average count
+            neighbors = rknn.radius_neighbors(X_val, return_distance=False)
+            avg_n = np.mean([len(n) for n in neighbors])
+            
             y_pred = rknn.predict(X_val)
             acc = accuracy_score(y_val, y_pred)
             
             accuracies.append(acc)
             valid_radii.append(r)
-            print(f"radius={r}: Validation Accuracy = {acc:.4f}")
+            avg_neighbors.append(avg_n)
+            print(f"radius={r}: Validation Accuracy = {acc:.4f}, Avg neighbors = {avg_n:.1f}")
             
         except ValueError as e:
             print(f"radius={r}: FAILED - {e}")
     
-    return valid_radii, accuracies
+    return valid_radii, accuracies, avg_neighbors
 
 
 # ============================================================================
@@ -483,7 +491,7 @@ def plot_heatmap_comparison(k_values, metrics, results, title):
 # 4️⃣ FINAL MODEL EVALUATION
 # ============================================================================
 
-def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params):
+def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params, model_type='knn'):
     """
     Train and evaluate the best model on test set.
     
@@ -508,6 +516,8 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params)
         Test labels
     best_params : dict
         Best hyperparameters found during validation
+    model_type : str, default='knn'
+        Type of model: 'knn' or 'radius'
     
     Returns:
     --------
@@ -519,6 +529,7 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params)
     print(f"\n{'='*60}")
     print("TESTING BEST MODEL ON TEST SET")
     print(f"{'='*60}")
+    print(f"Model type: {model_type}")
     print(f"Best parameters: {best_params}")
     
     # Combine train and validation for final training
@@ -531,11 +542,21 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params)
     X_test_enc = encoder.transform(X_test)
     
     # Train best model on full training set (train + validation)
-    best_knn = KNeighborsClassifier(**best_params)
-    best_knn.fit(X_train_enc, y_train_full)
+    if model_type == 'radius':
+        best_model = RadiusNeighborsClassifier(**best_params)
+    else:
+        best_model = KNeighborsClassifier(**best_params)
+    
+    best_model.fit(X_train_enc, y_train_full)
+    
+    # For radius classifier, report average neighbors on test set
+    if model_type == 'radius':
+        neighbors = best_model.radius_neighbors(X_test_enc, return_distance=False)
+        avg_test_neighbors = np.mean([len(n) for n in neighbors])
+        print(f"Average neighbors on test set: {avg_test_neighbors:.1f}")
     
     # Predict on test set
-    y_pred = best_knn.predict(X_test_enc)
+    y_pred = best_model.predict(X_test_enc)
     test_acc = accuracy_score(y_test, y_pred)
     
     # Print detailed metrics
@@ -546,7 +567,7 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params)
     # Create confusion matrix visualization
     fig, ax = plt.subplots(figsize=(8, 6))
     disp = ConfusionMatrixDisplay.from_estimator(
-        best_knn, X_test_enc, y_test, 
+        best_model, X_test_enc, y_test, 
         cmap='Blues', ax=ax
     )
     ax.set_title(f"Confusion Matrix - Test Set\nAccuracy: {test_acc:.4f}", 
@@ -634,8 +655,17 @@ def main(problem_num=1, random_state=None):
     print("EXPERIMENT 4: Radius Neighbors")
     print(f"{'#'*60}")
     
-    valid_radii, results_radius = evaluate_radius_knn(X_train_enc, y_train, 
-                                                      X_val_enc, y_val, radius_values)
+    valid_radii, results_radius, avg_neighbors = evaluate_radius_knn(X_train_enc, y_train, 
+                                                                      X_val_enc, y_val, radius_values)
+    
+    # Plot radius results if we have valid results
+    if valid_radii:
+        radius_dict = {f'Radius-{r:.2f}': [acc] for r, acc in zip(valid_radii, results_radius)}
+        fig_radius = plot_comparison(valid_radii, {'Radius-KNN': results_radius}, 
+                                    f"MONK-{problem_num}: Radius KNN Performance",
+                                    xlabel="Radius")
+        plt.savefig(f'monk_{problem_num}_radius_comparison.pdf', dpi=300, bbox_inches='tight')
+        plt.show()
     
     # FINAL COMPARISON
     print(f"\n{'#'*60}")
@@ -654,47 +684,73 @@ def main(problem_num=1, random_state=None):
     plt.savefig(f'monk_{problem_num}_final_comparison.pdf', dpi=300, bbox_inches='tight')
     plt.show()
     
-    # Find best model based on validation accuracy
+    # Find best model based on validation accuracy (including radius)
     best_val_acc = 0
     best_method = None
     best_k = None
+    best_radius = None
     
+    # Check k-based methods
     for method, accuracies in all_results.items():
         for k, acc in zip(k_values, accuracies):
             if acc > best_val_acc:
                 best_val_acc = acc
                 best_method = method
                 best_k = k
+                best_radius = None
+    
+    # Check radius-based method
+    for r, acc, avg_n in zip(valid_radii, results_radius, avg_neighbors):
+        if acc > best_val_acc:
+            best_val_acc = acc
+            best_method = 'Radius-KNN'
+            best_k = None
+            best_radius = r
+            print(f"  (Radius {r} uses avg {avg_n:.1f} neighbors)")
     
     print(f"\n{'='*60}")
     print("BEST MODEL ON VALIDATION SET")
     print(f"{'='*60}")
     print(f"Method: {best_method}")
-    print(f"k: {best_k}")
+    if best_k is not None:
+        print(f"k: {best_k}")
+    if best_radius is not None:
+        print(f"Radius: {best_radius}")
+        idx = valid_radii.index(best_radius)
+        print(f"Average neighbors: {avg_neighbors[idx]:.1f}")
     print(f"Validation Accuracy: {best_val_acc:.4f}")
     
     # Determine best parameters for final model
     if best_method == 'KNN-Hamming':
         best_params = {'n_neighbors': best_k, 'metric': 'hamming'}
+        model_type = 'knn'
     elif best_method == 'KNN-Euclidean':
         best_params = {'n_neighbors': best_k, 'metric': 'euclidean'}
+        model_type = 'knn'
     elif best_method == 'Weighted-Distance':
         best_params = {'n_neighbors': best_k, 'metric': 'hamming', 'weights': 'distance'}
-    else:  # Modified-KNN
+        model_type = 'knn'
+    elif best_method == 'Modified-KNN':
         best_params = {'n_neighbors': best_k, 'metric': 'hamming'}
+        model_type = 'knn'
+    else:  # Radius-KNN
+        best_params = {'radius': best_radius, 'metric': 'hamming', 'outlier_label': 'most_frequent'}
+        model_type = 'radius'
     
     # Test best model on test set
     test_acc, fig_cm = test_best_model(X_train, y_train, X_val, y_val, 
-                                       X_test, y_test, best_params)
+                                       X_test, y_test, best_params, model_type)
     plt.savefig(f'monk_{problem_num}_confusion_matrix.pdf', dpi=300, bbox_inches='tight')
     plt.show()
     
     return {
         'best_method': best_method,
         'best_k': best_k,
+        'best_radius': best_radius,
         'validation_accuracy': best_val_acc,
         'test_accuracy': test_acc,
-        'all_results': all_results
+        'all_results': all_results,
+        'radius_results': dict(zip(valid_radii, results_radius)) if valid_radii else {}
     }
 
 
@@ -723,7 +779,10 @@ if __name__ == "__main__":
     for prob, res in results_all.items():
         print(f"\nMONK-{prob}:")
         print(f"  Best Method: {res['best_method']}")
-        print(f"  Optimal k: {res['best_k']}")
+        if res['best_k'] is not None:
+            print(f"  Optimal k: {res['best_k']}")
+        if res['best_radius'] is not None:
+            print(f"  Optimal radius: {res['best_radius']}")
         print(f"  Validation Accuracy: {res['validation_accuracy']:.4f}")
         print(f"  Test Accuracy: {res['test_accuracy']:.4f}")
     

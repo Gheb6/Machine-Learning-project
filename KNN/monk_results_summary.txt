@@ -1,0 +1,28 @@
+======================================================================
+SUMMARY: BEST MODELS FOR EACH MONK PROBLEM
+======================================================================
+
+MONK-1:
+  Best Method: KNN-Hamming
+  Optimal k: 3
+  Validation Accuracy: 0.8800
+  Test Accuracy: 0.8056
+  AUC Score: 0.8688
+
+MONK-2:
+  Best Method: KNN-Euclidean
+  Optimal k: 1
+  Validation Accuracy: 0.7353
+  Test Accuracy: 0.7407
+  AUC Score: 0.7422
+
+MONK-3:
+  Best Method: Radius-KNN
+  Optimal radius: 0.4
+  Validation Accuracy: 0.8800
+  Test Accuracy: 0.9491
+  AUC Score: 0.9627
+
+======================================================================
+Random seed used: 56
+======================================================================

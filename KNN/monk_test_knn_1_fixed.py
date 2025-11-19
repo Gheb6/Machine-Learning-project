@@ -42,6 +42,9 @@ from matplotlib.collections import LineCollection
 import seaborn as sns
 from sklearn.metrics import pairwise_distances
 import time  # Import time module for seed
+from sklearn.metrics import roc_curve, auc, RocCurveDisplay
+import os
+import sys
 
 # Configure plotting style for professional-looking figures
 sns.set_style("whitegrid")
@@ -51,6 +54,68 @@ plt.rcParams['figure.figsize'] = (12, 6)
 seed = int(time.time())
 print(f"Random seed set to: {seed}")
 # seed = 56
+
+
+# ============================================================================
+# 0️⃣ GOOGLE COLAB SETUP AND HELPER FUNCTIONS
+# ============================================================================
+
+def setup_google_drive():
+    """
+    Mount Google Drive if running in Google Colab and create output directory.
+    
+    Returns:
+    --------
+    output_dir : str
+        Path to the output directory (local or Google Drive)
+    is_colab : bool
+        Whether running in Google Colab environment
+    """
+    try:
+        # Check if running in Google Colab
+        import google.colab
+        is_colab = True
+        
+        print("🔵 Google Colab detected!")
+        print("Mounting Google Drive...")
+        
+        from google.colab import drive
+        drive.mount('/content/drive')
+        
+        # Create output directory in Google Drive
+        output_dir = '/content/drive/MyDrive/MONK_KNN_Results'
+        os.makedirs(output_dir, exist_ok=True)
+        
+        print(f"✅ Google Drive mounted successfully!")
+        print(f"📁 Output directory: {output_dir}")
+        
+        return output_dir, is_colab
+        
+    except ImportError:
+        # Not running in Colab, use local directory
+        is_colab = False
+        output_dir = '.'
+        print("💻 Running locally - files will be saved in current directory")
+        
+        return output_dir, is_colab
+
+
+def save_figure(fig, filename, output_dir='.'):
+    """
+    Save figure to specified directory.
+    
+    Parameters:
+    -----------
+    fig : matplotlib.figure.Figure
+        Figure to save
+    filename : str
+        Filename (without path)
+    output_dir : str
+        Directory to save the figure
+    """
+    filepath = os.path.join(output_dir, filename)
+    fig.savefig(filepath, dpi=300, bbox_inches='tight')
+    print(f"💾 Saved: {filepath}")
 
 
 # ============================================================================
@@ -487,11 +552,71 @@ def plot_heatmap_comparison(k_values, metrics, results, title):
     return fig
 
 
+def plot_roc_curve(y_true, y_pred_proba, title, save_path=None):
+    """
+    Plot ROC curve for binary classification.
+    
+    Parameters:
+    -----------
+    y_true : array-like
+        True binary labels
+    y_pred_proba : array-like
+        Predicted probabilities for positive class
+    title : str
+        Plot title
+    save_path : str, optional
+        Path to save the figure
+    
+    Returns:
+    --------
+    fig : matplotlib.figure.Figure
+        Figure object
+    auc_score : float
+        Area Under the Curve (AUC) score
+    """
+    # Calculate ROC curve
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
+    roc_auc = auc(fpr, tpr)
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Plot ROC curve
+    ax.plot(fpr, tpr, color='darkorange', lw=2, 
+            label=f'ROC curve (AUC = {roc_auc:.4f})')
+    
+    # Plot diagonal reference line
+    ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', 
+            label='Random Classifier')
+    
+    # Formatting
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate', fontsize=12, fontweight='bold')
+    ax.set_ylabel('True Positive Rate', fontsize=12, fontweight='bold')
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.legend(loc="lower right", fontsize=11)
+    ax.grid(True, alpha=0.3)
+    
+    # Add AUC text box
+    textstr = f'AUC = {roc_auc:.4f}'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.6, 0.2, textstr, transform=ax.transAxes, fontsize=12,
+            verticalalignment='top', bbox=props)
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    return fig, roc_auc
+
+
 # ============================================================================
 # 4️⃣ FINAL MODEL EVALUATION
 # ============================================================================
 
-def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params, model_type='knn'):
+def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params, model_type='knn', problem_num=1, output_dir='.'):
     """
     Train and evaluate the best model on test set.
     
@@ -499,6 +624,7 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
     1. Re-trains on combined train+validation data
     2. Evaluates on test set (never seen during tuning)
     3. Generates detailed performance metrics
+    4. Plots ROC curve
     
     Parameters:
     -----------
@@ -518,13 +644,21 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
         Best hyperparameters found during validation
     model_type : str, default='knn'
         Type of model: 'knn' or 'radius'
+    problem_num : int, default=1
+        MONK problem number for saving files
+    output_dir : str, default='.'
+        Directory to save output files
     
     Returns:
     --------
     test_acc : float
         Test set accuracy
-    fig : matplotlib.figure.Figure
+    fig_cm : matplotlib.figure.Figure
         Confusion matrix figure
+    fig_roc : matplotlib.figure.Figure
+        ROC curve figure
+    auc_score : float
+        AUC score
     """
     print(f"\n{'='*60}")
     print("TESTING BEST MODEL ON TEST SET")
@@ -559,13 +693,16 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
     y_pred = best_model.predict(X_test_enc)
     test_acc = accuracy_score(y_test, y_pred)
     
+    # Get predicted probabilities for ROC curve
+    y_pred_proba = best_model.predict_proba(X_test_enc)[:, 1]
+    
     # Print detailed metrics
     print(f"\n📊 Test Accuracy: {test_acc:.4f}")
     print(f"\n📋 Classification Report:")
     print(classification_report(y_test, y_pred))
     
     # Create confusion matrix visualization
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig_cm, ax = plt.subplots(figsize=(8, 6))
     disp = ConfusionMatrixDisplay.from_estimator(
         best_model, X_test_enc, y_test, 
         cmap='Blues', ax=ax
@@ -574,14 +711,24 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
                  fontsize=14, fontweight='bold')
     plt.tight_layout()
     
-    return test_acc, fig
+    # Create ROC curve
+    roc_save_path = os.path.join(output_dir, f'monk_{problem_num}_roc_curve.pdf')
+    fig_roc, auc_score = plot_roc_curve(
+        y_test, y_pred_proba,
+        f"ROC Curve - MONK-{problem_num} (Test Set)",
+        save_path=roc_save_path
+    )
+    
+    print(f"\n📈 AUC Score: {auc_score:.4f}")
+    
+    return test_acc, fig_cm, fig_roc, auc_score
 
 
 # ============================================================================
 # 5️⃣ MAIN EXECUTION
 # ============================================================================
 
-def main(problem_num=1, random_state=None):
+def main(problem_num=1, random_state=None, output_dir='.'):
     """
     Main execution function - orchestrates entire analysis.
     
@@ -596,6 +743,16 @@ def main(problem_num=1, random_state=None):
     4. Compare all methods
     5. Select best model based on validation accuracy
     6. Retrain on train+validation and evaluate on test set
+    7. Generate ROC curve
+    
+    Parameters:
+    -----------
+    problem_num : int
+        MONK problem number (1, 2, or 3)
+    random_state : int, optional
+        Random seed for reproducibility
+    output_dir : str, default='.'
+        Directory to save output files
     """
     
     # Load data with validation split
@@ -622,12 +779,12 @@ def main(problem_num=1, random_state=None):
     
     fig1 = plot_comparison(k_values, results_metrics, 
                           f"MONK-{problem_num}: KNN Performance by Distance Metric")
-    plt.savefig(f'monk_{problem_num}_metrics_comparison.pdf', dpi=300, bbox_inches='tight')
+    save_figure(fig1, f'monk_{problem_num}_metrics_comparison.pdf', output_dir)
     plt.show()
     
     fig_heat1 = plot_heatmap_comparison(k_values, metrics, results_metrics,
                                        f"MONK-{problem_num}: Accuracy Heatmap - Distance Metrics")
-    plt.savefig(f'monk_{problem_num}_metrics_heatmap.pdf', dpi=300, bbox_inches='tight')
+    save_figure(fig_heat1, f'monk_{problem_num}_metrics_heatmap.pdf', output_dir)
     plt.show()
     
     # EXPERIMENT 2: Different weighting schemes
@@ -640,7 +797,7 @@ def main(problem_num=1, random_state=None):
     
     fig2 = plot_comparison(k_values, results_weights, 
                           f"MONK-{problem_num}: KNN Performance by Weighting Scheme")
-    plt.savefig(f'monk_{problem_num}_weights_comparison.pdf', dpi=300, bbox_inches='tight')
+    save_figure(fig2, f'monk_{problem_num}_weights_comparison.pdf', output_dir)
     plt.show()
     
     # EXPERIMENT 3: Modified KNN
@@ -664,7 +821,7 @@ def main(problem_num=1, random_state=None):
         fig_radius = plot_comparison(valid_radii, {'Radius-KNN': results_radius}, 
                                     f"MONK-{problem_num}: Radius KNN Performance",
                                     xlabel="Radius")
-        plt.savefig(f'monk_{problem_num}_radius_comparison.pdf', dpi=300, bbox_inches='tight')
+        save_figure(fig_radius, f'monk_{problem_num}_radius_comparison.pdf', output_dir)
         plt.show()
     
     # FINAL COMPARISON
@@ -681,7 +838,7 @@ def main(problem_num=1, random_state=None):
     
     fig_final = plot_comparison(k_values, all_results, 
                                f"MONK-{problem_num}: Final Comparison of All Methods")
-    plt.savefig(f'monk_{problem_num}_final_comparison.pdf', dpi=300, bbox_inches='tight')
+    save_figure(fig_final, f'monk_{problem_num}_final_comparison.pdf', output_dir)
     plt.show()
     
     # Find best model based on validation accuracy (including radius)
@@ -738,9 +895,15 @@ def main(problem_num=1, random_state=None):
         model_type = 'radius'
     
     # Test best model on test set
-    test_acc, fig_cm = test_best_model(X_train, y_train, X_val, y_val, 
-                                       X_test, y_test, best_params, model_type)
-    plt.savefig(f'monk_{problem_num}_confusion_matrix.pdf', dpi=300, bbox_inches='tight')
+    test_acc, fig_cm, fig_roc, auc_score = test_best_model(
+        X_train, y_train, X_val, y_val, 
+        X_test, y_test, best_params, model_type, problem_num, output_dir
+    )
+    save_figure(fig_cm, f'monk_{problem_num}_confusion_matrix.pdf', output_dir)
+    plt.show()
+    
+    # Show ROC curve
+    plt.figure(fig_roc.number)
     plt.show()
     
     return {
@@ -749,6 +912,7 @@ def main(problem_num=1, random_state=None):
         'best_radius': best_radius,
         'validation_accuracy': best_val_acc,
         'test_accuracy': test_acc,
+        'auc_score': auc_score,
         'all_results': all_results,
         'radius_results': dict(zip(valid_radii, results_radius)) if valid_radii else {}
     }
@@ -759,6 +923,15 @@ if __name__ == "__main__":
     Run analysis for all three MONK problems.
     """
     
+    # Setup Google Drive if in Colab
+    output_dir, is_colab = setup_google_drive()
+    
+    if is_colab:
+        print("\n" + "="*70)
+        print("📌 IMPORTANT: All results will be saved to:")
+        print(f"   {output_dir}")
+        print("="*70 + "\n")
+    
     results_all = {}
     
     for problem_num in [1, 2, 3]:
@@ -768,8 +941,32 @@ if __name__ == "__main__":
         print(f"{'#'*70}")
         print(f"{'#'*70}\n")
         
-        results = main(problem_num, random_state=seed)
+        results = main(problem_num, random_state=seed, output_dir=output_dir)
         results_all[problem_num] = results
+    
+    # Save summary to text file
+    summary_path = os.path.join(output_dir, 'monk_results_summary.txt')
+    with open(summary_path, 'w') as f:
+        f.write("="*70 + "\n")
+        f.write("SUMMARY: BEST MODELS FOR EACH MONK PROBLEM\n")
+        f.write("="*70 + "\n\n")
+        
+        for prob, res in results_all.items():
+            f.write(f"MONK-{prob}:\n")
+            f.write(f"  Best Method: {res['best_method']}\n")
+            if res['best_k'] is not None:
+                f.write(f"  Optimal k: {res['best_k']}\n")
+            if res['best_radius'] is not None:
+                f.write(f"  Optimal radius: {res['best_radius']}\n")
+            f.write(f"  Validation Accuracy: {res['validation_accuracy']:.4f}\n")
+            f.write(f"  Test Accuracy: {res['test_accuracy']:.4f}\n")
+            f.write(f"  AUC Score: {res['auc_score']:.4f}\n\n")
+        
+        f.write("="*70 + "\n")
+        f.write(f"Random seed used: {seed}\n")
+        f.write("="*70 + "\n")
+    
+    print(f"\n💾 Summary saved to: {summary_path}")
     
     # Final summary
     print(f"\n\n{'='*70}")
@@ -785,7 +982,12 @@ if __name__ == "__main__":
             print(f"  Optimal radius: {res['best_radius']}")
         print(f"  Validation Accuracy: {res['validation_accuracy']:.4f}")
         print(f"  Test Accuracy: {res['test_accuracy']:.4f}")
+        print(f"  AUC Score: {res['auc_score']:.4f}")
     
     print(f"\n{'='*70}")
-    print("Analysis complete! Check generated PDF files for visualizations.")
+    if is_colab:
+        print(f"✅ Analysis complete! All files saved to Google Drive:")
+        print(f"   {output_dir}")
+    else:
+        print("✅ Analysis complete! Check generated PDF files in current directory.")
     print(f"{'='*70}\n")

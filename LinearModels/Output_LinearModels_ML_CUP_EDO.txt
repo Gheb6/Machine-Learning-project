@@ -1,0 +1,108 @@
+Ho scelto di usare R2 (nei modelli "baseline") perchè stiamo facendo REGRESSIONE (accuratezza era possibile solo in classificazione credo);
+
+OUTPUT MODELLI BASELINE (NO TRASFORMAZIONI, NO RICERCA PARAMETRI CON GRIDSEARCH, NIENTE, COSI' PER AVERE GIA' UN'IDEA DI COME SI COMPORTANO):
+"""
+Dataset: 1000 samples, 12 features.
+
+Train: (750, 12), Test: (250, 12)
+
+=== Baseline Models with TRAIN / VALIDATION / TEST R² ===
++------------------+----------+---------------+---------+----------------------+--------+
+|      Model       | R2_Train | R2_Validation | R2_Test | Mean_Euclidean_Error |  RMSE  |
++------------------+----------+---------------+---------+----------------------+--------+
+|    LinearSVR     |  0.9816  |     0.9809    |  0.981  |        0.7835        | 0.9569 |
+|      Ridge       |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 |
+|  BayesianRidge   |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 |
+|   SGDRegressor   |  0.9812  |     0.9803    |  0.9808 |        0.7748        | 0.9621 |
+| LinearRegression |  0.9819  |     0.9812    |  0.9807 |        0.786         | 0.9623 |
+|    ElasticNet    |  0.9664  |     0.9662    |  0.9673 |        1.0161        | 1.2532 |
+|      Lasso       |  0.9617  |     0.9611    |  0.9616 |        1.1076        | 1.3593 |
++------------------+----------+---------------+---------+----------------------+--------+
+
+""""
+
+OUTPUT DEI MODELLI DOPO SIA TRASFORMAZIONI CHE GRIDSEARCH:
+- Nota: La trasformazione cambia talmente poco che effettivamente potrebbe anche essere omessa, cambiamento di tipo + 0.01 (veramente poco);
+"""
+=== Models Improved After Transformation + GridSearch ===
++------------------+----------------+----------+---------------+---------+----------------------+--------+----------+
+|      Model       | Transformation | R2_Train | R2_Validation | R2_Test | Mean_Euclidean_Error |  RMSE  |   Gain   |
++------------------+----------------+----------+---------------+---------+----------------------+--------+----------+
+|      Lasso       |     PCA10      |  0.9814  |     0.981     |  0.9811 |        0.7699        | 0.9525 | 0.019535 |
+|      Lasso       |     Poly3      |  0.9816  |     0.981     |  0.9809 |        0.781         | 0.958  | 0.01932  |
+|      Lasso       |     Poly2      |  0.9816  |     0.981     |  0.9809 |        0.781         | 0.958  | 0.019318 |
+|      Lasso       |  Interactions  |  0.9816  |     0.981     |  0.9809 |        0.781         | 0.958  | 0.019318 |
+|      Lasso       |  RobustScaler  |  0.9816  |     0.9811    |  0.9808 |         0.78         | 0.9603 | 0.019228 |
+|      Lasso       |  MinMaxScaler  |  0.9815  |     0.9811    |  0.9808 |        0.7809        | 0.9605 | 0.01922  |
+|      Lasso       | StandardScaler |  0.9816  |     0.9811    |  0.9808 |        0.7813        | 0.962  | 0.019157 |
+|      Lasso       |   Nonlinear    |  0.9816  |     0.9811    |  0.9807 |        0.779         | 0.9624 | 0.019141 |
+|    ElasticNet    |     Poly3      |  0.9822  |     0.9808    |  0.981  |        0.7775        | 0.9563 | 0.013686 |
+|    ElasticNet    | StandardScaler |  0.9816  |     0.9811    |  0.981  |        0.7753        | 0.9568 | 0.013665 |
+|    ElasticNet    |     PCA10      |  0.9815  |     0.9812    |  0.9809 |        0.7746        | 0.9573 | 0.013646 |
+|    ElasticNet    |   Nonlinear    |  0.9816  |     0.9811    |  0.9809 |        0.7726        | 0.9576 | 0.013634 |
+|    ElasticNet    |  MinMaxScaler  |  0.9814  |     0.981     |  0.9809 |        0.7776        | 0.9581 | 0.013615 |
+|    ElasticNet    |  Interactions  |  0.9818  |     0.9808    |  0.9809 |        0.7811        | 0.9585 |  0.0136  |
+|    ElasticNet    |  RobustScaler  |  0.9815  |     0.9811    |  0.9809 |        0.7778        | 0.9589 | 0.013583 |
+|    ElasticNet    |     Poly2      |  0.9812  |     0.9808    |  0.9808 |        0.7836        | 0.9599 | 0.013542 |
+|    LinearSVR     |     PCA10      |  0.9816  |     0.9811    |  0.9811 |        0.7706        | 0.9533 | 0.000106 |
+| LinearRegression |     PCA10      |  0.9818  |     0.9814    |  0.9808 |        0.781         | 0.9618 | 6.7e-05  |
+| LinearRegression | StandardScaler |  0.9819  |     0.9812    |  0.9807 |        0.786         | 0.9623 | 4.6e-05  |
+| LinearRegression |  RobustScaler  |  0.9819  |     0.9812    |  0.9807 |        0.786         | 0.9623 | 4.6e-05  |
+| LinearRegression |  MinMaxScaler  |  0.9819  |     0.9812    |  0.9807 |        0.786         | 0.9623 | 4.6e-05  |
+| LinearRegression |   Nonlinear    |  0.9819  |     0.9812    |  0.9807 |        0.7841        | 0.9626 | 3.5e-05  |
+|      Ridge       |     PCA10      |  0.9817  |     0.9814    |  0.9808 |        0.7795        | 0.9601 | 3.4e-05  |
+|      Ridge       | StandardScaler |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 | 3.2e-05  |
+|      Ridge       |  MinMaxScaler  |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 | 3.2e-05  |
+|  BayesianRidge   | StandardScaler |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 | 3.2e-05  |
+|  BayesianRidge   |  RobustScaler  |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 | 3.2e-05  |
+|  BayesianRidge   |  MinMaxScaler  |  0.9819  |     0.9812    |  0.9808 |        0.7834        | 0.9602 | 3.1e-05  |
+|  BayesianRidge   |     PCA10      |  0.9817  |     0.9814    |  0.9808 |        0.7797        | 0.9603 | 2.7e-05  |
+|      Ridge       |   Nonlinear    |  0.9819  |     0.9813    |  0.9808 |        0.7813        | 0.9605 | 1.7e-05  |
+|  BayesianRidge   |   Nonlinear    |  0.9819  |     0.9813    |  0.9808 |        0.7813        | 0.9606 | 1.6e-05  |
++------------------+----------------+----------+---------------+---------+----------------------+--------+----------+
+"""
+
+
+======================================================== CONCLUSIONI FATTE:==============================================================================
+Guardando solo i MODELLI BASELINE (prima delle trasformazioni), i migliori sono:
+1. LinearSVR -> È il modello BASELINE più equilibrato e preciso.
+    R²_test: 0.9810 (top)
+    RMSE: 0.9569 (migliore)
+    MEE: 0.7835 (quasi migliore)
+2. Ridge / Bayesian Ridge (pari) -> Ottima generalizzazione, errori leggermente superiori a LinearSVR, ma differenze minime.
+    R²_test: 0.9808
+    RMSE: 0.9602
+    MEE: 0.7834
+3. SGDRegressor -> Il MEE è il più basso, cioè l’errore medio “reale” è il minimo, anche se RMSE è un po’ peggiore.
+    R²_test: 0.9808
+    RMSE: 0.9621
+    MEE: 0.7748 (Migliore MEE di tutti)
+NOTA: DAI DATI CREDO NON CI SIA TANTI UNDERFITTING/OVERFITTING... SPERO DI NON SBAGLIARMI;
+
+
+Guardando invece i modelli DOPO LE TRASFORMAZIONI, osserviamo:
+1. Lasso (che non era neanche nella top precedente, RECUPERA COMPLETAMENTE E DIVENTA IL MODELLO MIGLIORE):
+    R²_test = 0.9811
+    RMSE = 0.9525 -> miglior RMSE in assoluto (dopo LinearSVR)
+    MEE = 0.7699
+    Gain = +0.0195 (enorme)
+2. LinearSVR PCA10
+    R²_test = 0.9811
+    RMSE = 0.9533
+    MEE = 0.7706
+3. ElasticNet Poly3 / StandardScaler / PCA10
+    Tra questi ElasticNet MIGLIORA TANTISSIMO rispetto a Baseline
+
+NOTA: RMSE è basso, poichè è circa 0.9 (mentre i TARGET nel dataset vanno anche da -3 a +4, ad occhio, magari poi faccio un tool 
+per trovare max e min, quindi RMSE su un totale di 7 di distacco tra max e min, sta a 0.9)...
+NOTA: MEE rimane vicino ad RMSE quindi top anche questo ( ma sicuramente sarebbe possibile fare alcune migliorie ancora).
+
+
+=================================================================== PERCHE' LASSO ED ELASTICNET MIGLIORANO DOPO LE TRASFORMAZIONI =======================
+Nel baseline, Lasso ed ElasticNet hanno performance molto peggiori...
+Dopo trasformazioni + GridSearch avviene un enorme miglioramento (gain);
+Questo fa capire alcune cose credo sul DATASET...
+1. Dataset credo sia MOLTO simile al lineare, con qualche Noisy nei dati... Perchè a differenza del Monk qua già con i modelli base arriviamo a 0.98 di R2...
+2. Probabilmente alcune Feature sono leggermente correlate o descrivono informazioni simili, questo nei modelli base come Lasso ed ElasticNet ne peggiora R2...
+
+NOTA: Queste sono critiche molto LEGGERE, infatti scalare o no ha cambiato pochissimo i risultati... ma ripeto credo il dataset sia molto lineare.

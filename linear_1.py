@@ -41,9 +41,9 @@ df_tr = pd.read_csv(TR_PATH, header=None, comment="#")
 df_ts = pd.read_csv(TS_PATH, header=None, comment="#")
 
 # Dati completi
-X_full = df_tr.iloc[:, 1:9].values
-Y_full = df_tr.iloc[:, 9:13].values
-X_blind_test = df_ts.iloc[:, 1:9].values  # Questo serve solo alla fine
+X_full = df_tr.iloc[:, 1:13].values
+Y_full = df_tr.iloc[:, 13:17].values
+X_blind_test = df_ts.iloc[:, 1:13].values  # Questo serve solo alla fine
 
 # SPLIT FONDAMENTALE: 80% Development (per CV), 20% Internal Test (per check finale)
 # ⚠️ IMPORTANTE: X_test_int NON VERRÀ USATO fino alla sezione 6 (valutazione finale)
@@ -218,6 +218,17 @@ print(f"---")
 print(f"Train MSE:                  {train_mse:.6f}")
 print(f"Test MSE:                   {test_mse:.6f}")
 print(f"MSE Gap (Test - Train):     {gap:.6f}")
+
+# Mostra dettagli predizioni vs target reali (primi 10 samples)
+print(f"\n=== DETTAGLIO PREDIZIONI (primi 10 samples del test set) ===")
+print(f"{'Sample':<8} | {'Input Features (X)':<60} | {'Predicted (Y_pred)':<35} | {'Actual (Y_true)':<35} | {'Error':<8}")
+print("-" * 160)
+for i in range(min(10, len(X_test_int))):
+    input_str = "[" + ", ".join([f"{x:.3f}" for x in X_test_int[i]]) + "]"
+    pred_str = "[" + ", ".join([f"{p:.4f}" for p in Y_pred_test[i]]) + "]"
+    true_str = "[" + ", ".join([f"{t:.4f}" for t in Y_test_int[i]]) + "]"
+    error = np.linalg.norm(Y_test_int[i] - Y_pred_test[i])
+    print(f"{i+1:<8} | {input_str:<60} | {pred_str:<35} | {true_str:<35} | {error:.4f}")
 
 # Salviamo le info del modello finale
 best_final_model_info = {

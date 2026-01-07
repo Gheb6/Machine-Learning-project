@@ -1,0 +1,31 @@
+Experiment,Category,Architecture,Activation,Solver,Alpha (L2),Learning Rate,Batch Size,Momentum,Train Acc,Val Acc,Iterations,Converged
+L2_alpha_0.0001,Regularization,"(8,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+L2_alpha_0.001,Regularization,"(8,)",relu,adam,0.001,0.001,auto,0.9,1.0,1.0,3000,False
+L2_alpha_0.01,Regularization,"(8,)",relu,adam,0.01,0.001,auto,0.9,1.0,1.0,3000,False
+L2_alpha_0.1,Regularization,"(8,)",relu,adam,0.1,0.001,auto,0.9,1.0,1.0,3000,False
+Momentum_0.5,Momentum,"(8,)",relu,sgd,0.0001,0.01,auto,0.5,0.9333333333333333,0.8529411764705882,3000,False
+Momentum_0.7,Momentum,"(8,)",relu,sgd,0.0001,0.01,auto,0.7,1.0,0.9705882352941176,3000,False
+Momentum_0.9,Momentum,"(8,)",relu,sgd,0.0001,0.01,auto,0.9,1.0,1.0,3000,False
+Momentum_0.95,Momentum,"(8,)",relu,sgd,0.0001,0.01,auto,0.95,1.0,1.0,3000,False
+Momentum_0.99,Momentum,"(8,)",relu,sgd,0.0001,0.01,auto,0.99,1.0,1.0,833,True
+LR_0.0001,Learning Rate,"(8,)",relu,adam,0.0001,0.0001,auto,0.9,0.7703703703703704,0.6176470588235294,3000,False
+LR_0.001,Learning Rate,"(8,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+LR_0.01,Learning Rate,"(8,)",relu,adam,0.0001,0.01,auto,0.9,1.0,1.0,986,True
+LR_0.1,Learning Rate,"(8,)",relu,adam,0.0001,0.1,auto,0.9,1.0,1.0,617,True
+Batch_8,Batch Size,"(8,)",relu,adam,0.0001,0.001,8,0.9,1.0,1.0,1183,True
+Batch_16,Batch Size,"(8,)",relu,adam,0.0001,0.001,16,0.9,1.0,1.0,1218,True
+Batch_32,Batch Size,"(8,)",relu,adam,0.0001,0.001,32,0.9,1.0,1.0,1897,True
+Batch_64,Batch Size,"(8,)",relu,adam,0.0001,0.001,64,0.9,1.0,1.0,2941,True
+Batch_auto,Batch Size,"(8,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+Act_relu,Activation,"(8,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+Act_tanh,Activation,"(8,)",tanh,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+Act_logistic,Activation,"(8,)",logistic,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+"Arch_(4,)",Architecture,"(4,)",relu,adam,0.0001,0.001,auto,0.9,0.8740740740740741,0.8235294117647058,3000,False
+"Arch_(8,)",Architecture,"(8,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+"Arch_(16,)",Architecture,"(16,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+"Arch_(8, 4)",Architecture,"(8, 4)",relu,adam,0.0001,0.001,auto,0.9,1.0,0.9705882352941176,2482,True
+"Arch_(12, 6)",Architecture,"(12, 6)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,2002,True
+"Arch_(16, 8, 4)",Architecture,"(16, 8, 4)",relu,adam,0.0001,0.001,auto,0.9,0.9259259259259259,0.8235294117647058,3000,False
+Solver_sgd,Solver,"(8,)",relu,sgd,0.0001,0.01,auto,0.9,1.0,1.0,3000,False
+Solver_adam,Solver,"(8,)",relu,adam,0.0001,0.001,auto,0.9,1.0,1.0,3000,False
+Solver_lbfgs,Solver,"(8,)",relu,lbfgs,0.0001,0.001,auto,0.9,1.0,1.0,176,True

@@ -1,0 +1,51 @@
+============================================================
+Decision Tree MONK Dataset Results
+============================================================
+Date: 2026-01-21 15:07:31
+============================================================
+
+MONK-1
+----------------------------------------
+Training Accuracy:   0.7576 (75.76%)
+Validation Accuracy: 0.7600 (76.00%)
+Test Accuracy:       0.8056 (80.56%)
+Full Train Accuracy: 0.8548 (85.48%)
+Best Parameters:
+  criterion: gini
+  max_depth: 4
+  min_samples_leaf: 2
+  min_samples_split: 5
+
+MONK-2
+----------------------------------------
+Training Accuracy:   0.6593 (65.93%)
+Validation Accuracy: 0.6176 (61.76%)
+Test Accuracy:       0.6435 (64.35%)
+Full Train Accuracy: 0.6686 (66.86%)
+Best Parameters:
+  criterion: gini
+  max_depth: 3
+  min_samples_leaf: 2
+  min_samples_split: 5
+
+MONK-3
+----------------------------------------
+Training Accuracy:   0.9278 (92.78%)
+Validation Accuracy: 0.9600 (96.00%)
+Test Accuracy:       0.9722 (97.22%)
+Full Train Accuracy: 0.9344 (93.44%)
+Best Parameters:
+  criterion: gini
+  max_depth: 3
+  min_samples_leaf: 2
+  min_samples_split: 5
+
+============================================================
+Summary Table
+============================================================
+Dataset    Train        Validation   Test        
+----------------------------------------------
+MONK-1     0.7576       0.7600       0.8056
+MONK-2     0.6593       0.6176       0.6435
+MONK-3     0.9278       0.9600       0.9722
+============================================================

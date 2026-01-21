@@ -347,19 +347,19 @@ MONK-3 (Noisy data):
         return [
             {
                 'criterion': ['gini', 'entropy'],
-                'max_depth': [3, 5, 7, 10, 15, None],
-                'min_samples_split': [2, 5, 10, 20],
-                'min_samples_leaf': [1, 2, 4, 8]
+                'max_depth': [3, 4, 5],           # Lower max depth
+                'min_samples_split': [5, 10, 15], # Higher threshold
+                'min_samples_leaf': [2, 4, 6]     # Force larger leaves
             }
         ]
     elif dataset_number == 2:
-        # MONK-2: Complex XOR-like problem
+        # MONK-2: Complex XOR-like problem - needs balance between complexity and regularization
         return [
             {
                 'criterion': ['gini', 'entropy'],
-                'max_depth': [5, 10, 15, 20, None],
-                'min_samples_split': [2, 5, 10],
-                'min_samples_leaf': [1, 2, 4]
+                'max_depth': [3, 5, 7, 10],           # Reduced max depth
+                'min_samples_split': [5, 10, 15, 20], # Higher thresholds to prevent overfitting
+                'min_samples_leaf': [2, 4, 6, 8]      # Force larger leaves
             }
         ]
     else:  # MONK-3
@@ -654,7 +654,15 @@ def train_and_evaluate_dt(dataset_number):
     plot_depth_analysis(all_results, dataset_number)
     plot_criterion_comparison(all_results, dataset_number)
     
-    return dt_final, test_acc, best_params, all_results
+    # Store metrics for saving to file
+    metrics = {
+        'train_acc': train_acc,
+        'val_acc': val_acc,
+        'test_acc': test_acc,
+        'train_full_acc': train_full_acc
+    }
+    
+    return dt_final, test_acc, best_params, all_results, metrics
 
 
 def plot_overall_comparison(all_dataset_results):
@@ -715,9 +723,12 @@ if __name__ == "__main__":
     - After selection, we want to use ALL training data for final model
     - Test set is only touched once, for final unbiased evaluation
     """
+    from datetime import datetime
+    
     results = {}
     best_params_summary = {}
     all_dataset_results = {}
+    all_metrics = {}
     
     print("="*60)
     print("DECISION TREE CLASSIFIER ON MONK DATASETS")
@@ -729,15 +740,14 @@ if __name__ == "__main__":
     print("4. Generate comprehensive visualizations")
     
     for i in [1, 2, 3]:
-        model, test_acc, best_params, grid_results = train_and_evaluate_dt(i)
+        model, test_acc, best_params, grid_results, metrics = train_and_evaluate_dt(i)
         results[f'MONK-{i}'] = test_acc
         best_params_summary[f'MONK-{i}'] = best_params
+        all_metrics[f'MONK-{i}'] = metrics
         
-        # For overall comparison, use best validation score as "training" accuracy
-        # (representing performance during model selection phase)
-        train_acc = max([r['val_score'] for r in grid_results])
+        # For overall comparison
         all_dataset_results[f'MONK-{i}'] = {
-            'train_acc': train_acc,
+            'train_acc': metrics['train_acc'],
             'test_acc': test_acc
         }
     
@@ -747,17 +757,54 @@ if __name__ == "__main__":
     print("="*60)
     plot_overall_comparison(all_dataset_results)
     
+    # Save results to text file
+    results_filename = 'decision_tree_monk_results.txt'
+    with open(results_filename, 'w') as f:
+        f.write("="*60 + "\n")
+        f.write("Decision Tree MONK Dataset Results\n")
+        f.write("="*60 + "\n")
+        f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("="*60 + "\n\n")
+        
+        for dataset in ['MONK-1', 'MONK-2', 'MONK-3']:
+            f.write(f"{dataset}\n")
+            f.write("-"*40 + "\n")
+            f.write(f"Training Accuracy:   {all_metrics[dataset]['train_acc']:.4f} ({all_metrics[dataset]['train_acc']*100:.2f}%)\n")
+            f.write(f"Validation Accuracy: {all_metrics[dataset]['val_acc']:.4f} ({all_metrics[dataset]['val_acc']*100:.2f}%)\n")
+            f.write(f"Test Accuracy:       {all_metrics[dataset]['test_acc']:.4f} ({all_metrics[dataset]['test_acc']*100:.2f}%)\n")
+            f.write(f"Full Train Accuracy: {all_metrics[dataset]['train_full_acc']:.4f} ({all_metrics[dataset]['train_full_acc']*100:.2f}%)\n")
+            f.write(f"Best Parameters:\n")
+            for param, value in best_params_summary[dataset].items():
+                f.write(f"  {param}: {value}\n")
+            f.write("\n")
+        
+        f.write("="*60 + "\n")
+        f.write("Summary Table\n")
+        f.write("="*60 + "\n")
+        f.write(f"{'Dataset':<10} {'Train':<12} {'Validation':<12} {'Test':<12}\n")
+        f.write("-"*46 + "\n")
+        for dataset in ['MONK-1', 'MONK-2', 'MONK-3']:
+            train = all_metrics[dataset]['train_acc']
+            val = all_metrics[dataset]['val_acc']
+            test = all_metrics[dataset]['test_acc']
+            f.write(f"{dataset:<10} {train:.4f}       {val:.4f}       {test:.4f}\n")
+        f.write("="*60 + "\n")
+    
+    print(f"\n✓ Results saved to '{results_filename}'")
+    
     # Print summary
     print(f"\n{'='*60}")
     print("SUMMARY OF RESULTS - DECISION TREE")
     print(f"{'='*60}")
     for dataset in ['MONK-1', 'MONK-2', 'MONK-3']:
         print(f"\n{dataset}:")
-        print(f"  Test Accuracy: {results[dataset]:.4f} ({results[dataset]*100:.2f}%)")
+        print(f"  Training Accuracy:   {all_metrics[dataset]['train_acc']:.4f} ({all_metrics[dataset]['train_acc']*100:.2f}%)")
+        print(f"  Validation Accuracy: {all_metrics[dataset]['val_acc']:.4f} ({all_metrics[dataset]['val_acc']*100:.2f}%)")
+        print(f"  Test Accuracy:       {all_metrics[dataset]['test_acc']:.4f} ({all_metrics[dataset]['test_acc']*100:.2f}%)")
         print(f"  Best Parameters:")
         for param, value in best_params_summary[dataset].items():
             print(f"    {param}: {value}")
     
     print(f"\n{'='*60}")
-    print("ALL RESULTS SAVED TO PDF FILES")
+    print("ALL RESULTS SAVED TO PDF AND TXT FILES")
     print(f"{'='*60}")

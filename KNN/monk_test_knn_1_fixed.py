@@ -683,6 +683,10 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
     
     best_model.fit(X_train_enc, y_train_full)
     
+    # Calculate training accuracy on full training set
+    y_train_pred = best_model.predict(X_train_enc)
+    train_acc = accuracy_score(y_train_full, y_train_pred)
+    
     # For radius classifier, report average neighbors on test set
     if model_type == 'radius':
         neighbors = best_model.radius_neighbors(X_test_enc, return_distance=False)
@@ -697,7 +701,8 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
     y_pred_proba = best_model.predict_proba(X_test_enc)[:, 1]
     
     # Print detailed metrics
-    print(f"\n📊 Test Accuracy: {test_acc:.4f}")
+    print(f"\n📊 Training Accuracy: {train_acc:.4f}")
+    print(f"📊 Test Accuracy: {test_acc:.4f}")
     print(f"\n📋 Classification Report:")
     print(classification_report(y_test, y_pred))
     
@@ -721,7 +726,7 @@ def test_best_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params,
     
     print(f"\n📈 AUC Score: {auc_score:.4f}")
     
-    return test_acc, fig_cm, fig_roc, auc_score
+    return train_acc, test_acc, fig_cm, fig_roc, auc_score
 
 
 # ============================================================================
@@ -764,7 +769,7 @@ def main(problem_num=1, random_state=None, output_dir='.'):
     X_train_enc, X_val_enc, X_test_enc, encoder = encode_data(X_train, X_val, X_test)
     
     # Define hyperparameters
-    k_values = list(range(1, 11))
+    k_values = list(range(3, 15))  # Start from k=3 instead of k=1
     metrics = ['hamming', 'euclidean', 'manhattan', 'minkowski']
     weights = ['uniform', 'distance']
     radius_values = [0.1, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5]
@@ -895,7 +900,7 @@ def main(problem_num=1, random_state=None, output_dir='.'):
         model_type = 'radius'
     
     # Test best model on test set
-    test_acc, fig_cm, fig_roc, auc_score = test_best_model(
+    train_acc, test_acc, fig_cm, fig_roc, auc_score = test_best_model(
         X_train, y_train, X_val, y_val, 
         X_test, y_test, best_params, model_type, problem_num, output_dir
     )
@@ -910,6 +915,7 @@ def main(problem_num=1, random_state=None, output_dir='.'):
         'best_method': best_method,
         'best_k': best_k,
         'best_radius': best_radius,
+        'train_accuracy': train_acc,
         'validation_accuracy': best_val_acc,
         'test_accuracy': test_acc,
         'auc_score': auc_score,
@@ -949,21 +955,33 @@ if __name__ == "__main__":
     with open(summary_path, 'w') as f:
         f.write("="*70 + "\n")
         f.write("SUMMARY: BEST MODELS FOR EACH MONK PROBLEM\n")
+        f.write("="*70 + "\n")
+        f.write(f"Random seed used: {seed}\n")
         f.write("="*70 + "\n\n")
         
         for prob, res in results_all.items():
-            f.write(f"MONK-{prob}:\n")
+            f.write(f"MONK-{prob}\n")
+            f.write("-"*40 + "\n")
             f.write(f"  Best Method: {res['best_method']}\n")
             if res['best_k'] is not None:
                 f.write(f"  Optimal k: {res['best_k']}\n")
             if res['best_radius'] is not None:
                 f.write(f"  Optimal radius: {res['best_radius']}\n")
-            f.write(f"  Validation Accuracy: {res['validation_accuracy']:.4f}\n")
-            f.write(f"  Test Accuracy: {res['test_accuracy']:.4f}\n")
+            f.write(f"  Training Accuracy:   {res['train_accuracy']:.4f} ({res['train_accuracy']*100:.2f}%)\n")
+            f.write(f"  Validation Accuracy: {res['validation_accuracy']:.4f} ({res['validation_accuracy']*100:.2f}%)\n")
+            f.write(f"  Test Accuracy:       {res['test_accuracy']:.4f} ({res['test_accuracy']*100:.2f}%)\n")
             f.write(f"  AUC Score: {res['auc_score']:.4f}\n\n")
         
         f.write("="*70 + "\n")
-        f.write(f"Random seed used: {seed}\n")
+        f.write("Summary Table\n")
+        f.write("="*70 + "\n")
+        f.write(f"{'Dataset':<10} {'Train':<12} {'Validation':<12} {'Test':<12}\n")
+        f.write("-"*46 + "\n")
+        for prob, res in results_all.items():
+            train = res['train_accuracy']
+            val = res['validation_accuracy']
+            test = res['test_accuracy']
+            f.write(f"MONK-{prob:<5} {train:.4f}       {val:.4f}       {test:.4f}\n")
         f.write("="*70 + "\n")
     
     print(f"\n💾 Summary saved to: {summary_path}")
@@ -980,8 +998,9 @@ if __name__ == "__main__":
             print(f"  Optimal k: {res['best_k']}")
         if res['best_radius'] is not None:
             print(f"  Optimal radius: {res['best_radius']}")
-        print(f"  Validation Accuracy: {res['validation_accuracy']:.4f}")
-        print(f"  Test Accuracy: {res['test_accuracy']:.4f}")
+        print(f"  Training Accuracy:   {res['train_accuracy']:.4f} ({res['train_accuracy']*100:.2f}%)")
+        print(f"  Validation Accuracy: {res['validation_accuracy']:.4f} ({res['validation_accuracy']*100:.2f}%)")
+        print(f"  Test Accuracy:       {res['test_accuracy']:.4f} ({res['test_accuracy']*100:.2f}%)")
         print(f"  AUC Score: {res['auc_score']:.4f}")
     
     print(f"\n{'='*70}")

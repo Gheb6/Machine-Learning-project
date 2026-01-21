@@ -1,0 +1,40 @@
+============================================================
+SVM MONK Dataset Results
+============================================================
+Random State: 42
+Date: 2026-01-21 12:22:38
+============================================================
+
+MONK-1
+----------------------------------------
+Training Accuracy:   1.0000 (100.00%)
+Validation Accuracy: 0.9600 (96.00%)
+Test Accuracy:       1.0000 (100.00%)
+Full Train Accuracy: 1.0000 (100.00%)
+Best Parameters:     {'C': 10, 'degree': 2, 'gamma': 'scale', 'kernel': 'poly'}
+
+MONK-2
+----------------------------------------
+Training Accuracy:   1.0000 (100.00%)
+Validation Accuracy: 0.9118 (91.18%)
+Test Accuracy:       1.0000 (100.00%)
+Full Train Accuracy: 1.0000 (100.00%)
+Best Parameters:     {'C': 1, 'coef0': 1, 'degree': 2, 'gamma': 1, 'kernel': 'poly'}
+
+MONK-3
+----------------------------------------
+Training Accuracy:   1.0000 (100.00%)
+Validation Accuracy: 1.0000 (100.00%)
+Test Accuracy:       0.9375 (93.75%)
+Full Train Accuracy: 1.0000 (100.00%)
+Best Parameters:     {'C': 10, 'gamma': 'scale', 'kernel': 'rbf'}
+
+============================================================
+Summary Table
+============================================================
+Dataset    Train        Validation   Test        
+----------------------------------------------
+MONK-1     1.0000       0.9600       1.0000
+MONK-2     1.0000       0.9118       1.0000
+MONK-3     1.0000       1.0000       0.9375
+============================================================

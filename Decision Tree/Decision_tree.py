@@ -347,9 +347,9 @@ MONK-3 (Noisy data):
         return [
             {
                 'criterion': ['gini', 'entropy'],
-                'max_depth': [3, 4, 5],           # Lower max depth
-                'min_samples_split': [5, 10, 15], # Higher threshold
-                'min_samples_leaf': [2, 4, 6]     # Force larger leaves
+                'max_depth': [None, 10, 15],           # Lower max depth
+                'min_samples_split': [2], # Higher threshold
+                'min_samples_leaf': [1]     # Force larger leaves
             }
         ]
     elif dataset_number == 2:
@@ -487,8 +487,8 @@ def train_and_evaluate_dt(dataset_number):
     print(f"{'='*60}")
     
     # Load training and test data
-    train_path = f'monks-{dataset_number}.train'
-    test_path = f'monks-{dataset_number}.test'
+    train_path = f'monk_dataset/monks-{dataset_number}.train'
+    test_path = f'monk_dataset/monks-{dataset_number}.test'
     
     print(f"\nLoading data from files:")
     print(f"  Training file: {train_path}")

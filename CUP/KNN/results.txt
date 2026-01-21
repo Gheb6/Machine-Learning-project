@@ -1,0 +1,28 @@
+======================================================================
+ML-CUP25 - KNN Regression Results
+======================================================================
+Date: 2026-01-21 16:30:02
+Random State: 42
+======================================================================
+
+Best Hyperparameters
+----------------------------------------
+  knn__metric: euclidean
+  knn__n_neighbors: 4
+  knn__weights: distance
+
+======================================================================
+Performance Metrics
+======================================================================
+Metric       Train (LOO)  Validation   Test        
+------------------------------------------------
+MEE          16.1851      16.7402      14.4829     
+MSE          92.7310      N/A          77.2245     
+R2           0.6956       N/A          0.7396      
+======================================================================
+
+Notes:
+- Train MEE computed via Leave-One-Out CV (excludes each point when predicting it)
+- Validation MEE is from 5-Fold Cross-Validation
+- Test metrics calculated on 20% held-out blind test set
+======================================================================

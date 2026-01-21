@@ -1,0 +1,63 @@
+======================================================================
+ML-CUP25 - Tree-Based Models Comparison Results
+======================================================================
+Date: 2026-01-21 16:40:22
+Random State: 42
+======================================================================
+
+RandomForest
+----------------------------------------
+  Training MEE:   20.2016
+  Validation MEE: 23.7727 (5-Fold CV)
+  Test MEE:       23.2357
+  Best Parameters:
+    max_depth: 7
+    max_features: 0.5
+    min_samples_leaf: 10
+    min_samples_split: 20
+    n_estimators: 200
+
+XGBoost
+----------------------------------------
+  Training MEE:   25.8926
+  Validation MEE: 27.0717 (5-Fold CV)
+  Test MEE:       27.0757
+  Best Parameters:
+    estimator__colsample_bytree: 0.5
+    estimator__learning_rate: 0.01
+    estimator__max_depth: 3
+    estimator__min_child_weight: 20
+    estimator__n_estimators: 100
+    estimator__reg_lambda: 10.0
+    estimator__subsample: 0.6
+
+LightGBM
+----------------------------------------
+  Training MEE:   25.6096
+  Validation MEE: 26.9505 (5-Fold CV)
+  Test MEE:       26.8314
+  Best Parameters:
+    estimator__colsample_bytree: 0.5
+    estimator__learning_rate: 0.01
+    estimator__min_child_samples: 50
+    estimator__n_estimators: 100
+    estimator__num_leaves: 8
+    estimator__reg_lambda: 10.0
+    estimator__subsample: 0.5
+
+======================================================================
+Summary Table
+======================================================================
+Model           Train MEE    Val MEE      Test MEE    
+---------------------------------------------------
+RandomForest    20.2016      23.7727      23.2357     
+LightGBM        25.6096      26.9505      26.8314     
+XGBoost         25.8926      27.0717      27.0757     
+======================================================================
+
+🏆 BEST MODEL: RandomForest
+----------------------------------------
+  Test MSE: 167.4256
+  Test MEE: 23.2357
+  Test R2:  0.4577
+======================================================================

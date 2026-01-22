@@ -1,0 +1,5 @@
+Final Model: Support Vector Regression (SVR) with RBF kernel and PCA (5 components).
+Validation Technique: Hyperparameters optimized via Grid Search with 5-Fold Cross-Validation.
+Best Configuration: C=39.0, Epsilon=0.54, Gamma=1.61.
+Internal Performance: MEE on Training = 9.855261, MEE on Validation = 16.547918.
+Final Test Performance: MEE = 14.981123 (calculated on 20% test unseen data)

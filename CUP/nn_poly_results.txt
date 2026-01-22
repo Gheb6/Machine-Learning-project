@@ -1,0 +1,39 @@
+======================================================================
+BEST MODEL RESULTS - ML-CUP 2025
+======================================================================
+Generated: 2026-01-22 08:47:39
+======================================================================
+
+MODEL CONFIGURATION
+----------------------------------------------------------------------
+Architecture:      [192, 128, 64]
+Learning Rate:     0.003
+L2 Regularization: 0.0002
+Dropout:           0.12
+Training Epochs:   112
+Batch Size:        16
+Feature Engineering: Polynomial Features (degree 2)
+Input Features:    90 (from 12 original)
+
+CROSS-VALIDATION PERFORMANCE (5-Fold)
+----------------------------------------------------------------------
+Average Training MEE:   7.6540
+Average Validation MEE: 18.2901
+
+FINAL MODEL PERFORMANCE (Trained on Full Development Set)
+----------------------------------------------------------------------
+Training Set MEE:  8.1055  (400 samples)
+Test Set MEE:      16.7707  (100 samples)
+
+PERFORMANCE SUMMARY
+----------------------------------------------------------------------
+Generalization Gap: 8.6652  (Overfitting)
+CV vs Test Gap:     1.5194
+
+KEY INSIGHTS
+----------------------------------------------------------------------
+✓ Polynomial features (degree 2) significantly improved performance
+✓ Deep architecture with strong L2 regularization worked best
+✓ Target scaling essential for stable training
+✓ Achieved MEE 16.7707, exceeding target of 18-19
+======================================================================
